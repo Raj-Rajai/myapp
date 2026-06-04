@@ -8,7 +8,7 @@ const Registration = () => {
     const [setError] = useState("");
     const insert_data = async (e) => {
         try{
-            const respose = await axios.post("https://myapp-3y37.onrender.com/users", {username: username, email: email,password: password
+            const respose = await axios.post("https://myapp-3y37.onrender.com/submit_user_data", {username: username, email: email,password: password
             });
             console.log("User data submitted successfully:", respose.data);
         } catch (error) {
