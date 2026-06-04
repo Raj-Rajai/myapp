@@ -11,7 +11,7 @@ const app = express();
 //const { wait } = require('@testing-library/user-event/dist/utils');
 // const staticPath = path.join(__dirname, 'public');// with this we are displaying the static files in the public folder, 
 
-app.use(cors());
+app.use(cors({origin: "https://model1project.netlify.app"}));//allowing requests from the frontend server which is running on port 3000, to the backend server which is running on port 5000. This is called cross-origin resource sharing (CORS). This is necessary because the frontend and backend are running on different ports, and the browser considers them as different origins. By default, the browser blocks requests from different origins for security reasons. By using CORS, we can allow requests from the frontend to the backend, and vice versa.
 app.use(express.json());
 app.post("/submit_user_data",async (req, res) => {
     try {
