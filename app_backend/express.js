@@ -31,5 +31,15 @@ app.post("/submit_user_data",async (req, res) => {
 // app.get('/index', (req, res) => {
 //     res.send('This is the index page');
 // });
+
+});
+app.get('/get_users', async (req, res) => {
+    try {
+        const users = await user_model.find({});
+        res.send(users);
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send("Error fetching users");
+    }
 });
 app.listen(5000);
