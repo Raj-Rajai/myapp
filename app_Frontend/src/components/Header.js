@@ -11,6 +11,7 @@ function Header({ fname, lname }){
                 <li><Link to="/Gallery">Gallery</Link></li>
                 <li><Link to="/Content">Content</Link></li>
                 <li><Link to="/Registration">Registration</Link></li>
+                <li><Link to="/ShowUsers">Show Users</Link></li>
             </ul>
         </div>
     );

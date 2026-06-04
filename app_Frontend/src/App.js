@@ -12,6 +12,7 @@ import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import Content from './components/Content';
 import Header from './components/Header';
 import Registration from './components/Registration';
+import ShowUsers from './components/Show Users';
 
 import Home from './pages/Home';
 import About from './pages/About';
@@ -39,6 +40,7 @@ const App = () => {
                             <Route path="/Gallery" element={<Gallery />} />
                             <Route path="/Content" element={<Content />} />
                             <Route path="/Registration" element={<Registration />} />
+                            <Route path="/ShowUsers" element={<ShowUsers />} />
                         </Routes>
                         {/* <Counter /> */}
                         </main>
