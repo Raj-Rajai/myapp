@@ -8,7 +8,7 @@ const Registration = () => {
     const [club, setClub] = useState("");
     const [transferValue, setTransferValue] = useState("");
     const [image, setImage] = useState("");
-    const [error, setError] = useState("");
+    const [setError] = useState("");
     
     const insert_data = async () => {
         try{
