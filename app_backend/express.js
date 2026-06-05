@@ -1,10 +1,9 @@
 require('dotenv').config();
-console.log("URI:", process.env.MONGODB_URI);
 require('./db/config');
 
 const express = require('express');
 const cors = require('cors');
-const {user_model} = require('./db/users');
+const {player_model} = require('./db/users');
 
 const app = express();
 //const path = require('path');
@@ -13,11 +12,11 @@ const app = express();
 
 app.use(cors({origin: "https://model1project.netlify.app"}));//allowing requests from the frontend server which is running on port 3000, to the backend server which is running on port 5000. This is called cross-origin resource sharing (CORS). This is necessary because the frontend and backend are running on different ports, and the browser considers them as different origins. By default, the browser blocks requests from different origins for security reasons. By using CORS, we can allow requests from the frontend to the backend, and vice versa.
 app.use(express.json());
-app.post("/submit_user_data",async (req, res) => {
+app.post("/add_player",async (req, res) => {
     try {
-        const user = user_model(req.body);
-        const awaite = await user.save();
-        res.send(awaite);
+        const player = player_model(req.body);
+        const savedPlayer = await player.save();
+        res.send(savedPlayer);
     } 
     catch (error) {
         console.error("Error saving user data:", error);
@@ -33,10 +32,10 @@ app.post("/submit_user_data",async (req, res) => {
 // });
 
 });
-app.get('/get_users', async (req, res) => {
+app.get('/get_players', async (req, res) => {
     try {
-        const users = await user_model.find({});
-        res.send(users);
+        const players = await player_model.find({});
+        res.send(players);
     } catch (error) {
         console.error("Error fetching users:", error);
         res.status(500).send("Error fetching users");

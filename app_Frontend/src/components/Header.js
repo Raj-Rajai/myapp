@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 function Header({ fname, lname }){
     return (
         <div className="myheader">
-            <p>This is Header</p>
-            <p>hello {fname} {lname}</p>
+            {/*<p>hello {fname} {lname}</p>*/}
+            <p>Mern WebPage</p><br/><br/>
             <ul>
                 <li><Link to="/Home">Home</Link></li>
                 <li><Link to="/About">About</Link></li>

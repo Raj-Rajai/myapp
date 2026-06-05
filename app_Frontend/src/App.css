@@ -1,41 +1,111 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
 
-.App-header {
-  background-color: #2754b0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  font-size: 20px;
-  color: rgb(245, 245, 245);
+:root{
+    --primary: #2563eb;
+    --secondary:#e8e8e8;
 }
-nav ul {
-  list-style-type: none;
-  display: flex;
-  gap: 20px;
+
+body{
+    background:#e8e8e8;
 }
-nav ul li {
-  display: inline;
+
+.App-header{
+    top:0;
+    z-index:100;
+    min-height:100vh;
+    width: 100%;
+    background:#e8e8e8;
+    color:#222;
 }
-nav ul li a {
-  color: rgb(245, 245, 245);
-  text-decoration: none;
-  font-weight: bold;
+.myheader{
+    display: flex;
+    position:fixed;
+    width:100%;
+    top: auto;
+    background:#2754b0;
+    padding:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.2);
+    justify-content: space-between;
+    align-items: center;
 }
-nav ul li a:hover {
-  color: #d29512;
+.myheader p:first-child{
+    font-size:28px;
+    font-weight:bold;
+    color:white;
 }
-.App-link {
-  color: #d29512;
+.myheader p:nth-child(2){
+    color:#dbeafe;
+    margin-top:5px;
 }
-.App-main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+.myheader ul{
+    list-style:none;
+    display:flex;
+    gap:15px;
+    margin-top:20px;
+    align-items: center;
+    flex-wrap:wrap;
 }
-.App-main h1 {
-  font-size: 36px;
-  margin-bottom: 20px;
+.myheader ul li a{
+    text-decoration:none;
+    color:white;
+    padding:10px 16px;
+    border-radius:8px;
+    transition:.3s;
 }
+.myheader ul li a:hover{
+    background:white;
+    color:#2754b0;
+}
+.App-main{
+    padding:30px;
+    padding-top:13%;
+}
+
+/* for registration page */
+.myregistration{
+    background:white;
+    max-width:500px;
+    margin:auto;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+
+.myregistration h1{
+    margin-bottom:20px;
+}
+
+.myregistration input{
+    width:100%;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    margin-top:5px;
+}
+
+.myregistration input:focus{
+    outline:none;
+    border-color:#2754b0;
+}
+
+.myregistration button{
+    width:100%;
+    padding:12px;
+    background:#2754b0;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+.myregistration button:hover{
+    background:#1d4ed8;
+}
+
+
