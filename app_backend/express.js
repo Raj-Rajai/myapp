@@ -12,7 +12,8 @@ const app = express();
 
 // CORS - allow both production and development
 const allowedOrigins = [
-  'https://football-news-hub-rj.netlify.app/',
+  'https://football-news-hub-rj.netlify.app',
+  'https://model1project.netlify.app',
   'http://localhost:3000',
   'http://localhost:3001'
 ];
