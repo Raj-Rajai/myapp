@@ -3,42 +3,50 @@ require('./db/config');
 
 const express = require('express');
 const cors = require('cors');
-const {player_model} = require('./db/users');
+
+const authRoutes = require('./routes/auth');
+const playerRoutes = require('./routes/players');
+const newsRoutes = require('./routes/news');
 
 const app = express();
-//const path = require('path');
-//const { wait } = require('@testing-library/user-event/dist/utils');
-// const staticPath = path.join(__dirname, 'public');// with this we are displaying the static files in the public folder, 
 
-app.use(cors({origin: "https://model1project.netlify.app"}));//allowing requests from the frontend server which is running on port 3000, to the backend server which is running on port 5000. This is called cross-origin resource sharing (CORS). This is necessary because the frontend and backend are running on different ports, and the browser considers them as different origins. By default, the browser blocks requests from different origins for security reasons. By using CORS, we can allow requests from the frontend to the backend, and vice versa.
+// CORS - allow both production and development
+const allowedOrigins = [
+  'https://football-news-hub-rj.netlify.app/',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
+
 app.use(express.json());
-app.post("/add_player",async (req, res) => {
-    try {
-        const player = player_model(req.body);
-        const savedPlayer = await player.save();
-        res.send(savedPlayer);
-    } 
-    catch (error) {
-        console.error("Error saving user data:", error);
-        res.status(500).send("Error saving user data");
-    }
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(staticPath, 'login.html'));//displaying frontend file in the backend server.
-// app.get('/', (req, res) => {
-//     res.send('Printing Hello World from Express');
-// });
-// app.get('/index', (req, res) => {
-//     res.send('This is the index page');
-// });
 
+// Health check
+app.get('/', (req, res) => {
+  res.json({ message: 'Football Transfer Hub API is running ⚽' });
 });
-app.get('/get_players', async (req, res) => {
-    try {
-        const players = await player_model.find({});
-        res.send(players);
-    } catch (error) {
-        console.error("Error fetching users:", error);
-        res.status(500).send("Error fetching users");
-    }
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/players', playerRoutes);
+app.use('/api/news', newsRoutes);
+
+// 404 handler for unknown API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ message: 'API endpoint not found.' });
 });
-app.listen(5000);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} ⚽`);
+});

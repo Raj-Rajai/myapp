@@ -1,11 +1,26 @@
 const mongoose = require('mongoose');
-const player_schema = new mongoose.Schema({
-    playerName: String,
-    age: Number,
-    position: String,
-    club: String,
-    transferValue: String,
-    image: String
+
+// User Schema
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  passwordHash: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
 });
-const player_model = mongoose.model("Player", player_schema);
-module.exports = {player_model};
+
+// Player Schema
+const playerSchema = new mongoose.Schema({
+  playerName: { type: String, required: true, trim: true },
+  age: { type: Number, required: true },
+  position: { type: String, required: true, trim: true },
+  club: { type: String, required: true, trim: true },
+  transferValue: { type: String, required: true, trim: true },
+  imageUrl: { type: String, default: '' },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model('User', userSchema);
+const Player = mongoose.model('Player', playerSchema);
+
+module.exports = { User, Player };

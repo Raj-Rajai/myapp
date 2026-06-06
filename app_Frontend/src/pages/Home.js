@@ -1,74 +1,97 @@
-import mbappe from '../assets/mbappe.jpg';
-import haaland from '../assets/halland.jpg';
-import alvarez from '../assets/alvarez.jpg';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&q=80';
+
 function Home() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const players = [
-        {
-            name: "Kylian Mbappe",
-            club: "Real Madrid",
-            value: "€180M",
-            image: mbappe
-        },
-        {
-            name: "Erling Haaland",
-            club: "Manchester City",
-            value: "€170M",
-            image: haaland
-        },
-        {
-            name: "Julian Alvarez",
-            club: "Atletico Madrid",
-            value: "€90M",
-            image: alvarez
-        }
-    ];
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await api.get('/api/news');
+        setNews(res.data);
+      } catch (error) {
+        console.error('Error fetching news:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, []);
 
-    return (
-        <div className="home">
-            <section className="hero">
-                <h1>⚽ Football Transfer Hub</h1>
-                <p>Latest transfer rumours, market values and football updates.</p>
-            </section>
-            <section className="featured">
-                <h2>Featured Players</h2>
-                <div className="player-grid">
-                    {players.map((player, index) => (
-                        <div className="player-card" key={index}>
-                            <img
-                                src={player.image}
-                                alt={player.name}
-                                className="player-image"
-                            />
-                            <h3>{player.name}</h3>
-                            <p>
-                                <strong>Club:</strong> {player.club}
-                            </p>
-                            <p>
-                                <strong>Market Value:</strong> {player.value}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </section><br/><br/>
-            <section className="news">
-                <h2>Latest Transfer Rumours</h2>
-                <div className="news-card">
-                    <h2>Latest Transfer Rumours</h2>
-                    <p>
-                        🔥 Barcelona monitoring Julian Alvarez as a potential attacking reinforcement.
-                    </p>
-                    <p>
-                        🔥 Manchester City remain determined to keep Erling Haaland despite interest from Europe.
-                    </p>
-                    <p>
-                        🔥 Real Madrid preparing long-term plans around Kylian Mbappe after his arrival.
-                    </p>
-                </div>
-            </section>
+  const handleImageError = (e) => {
+    e.target.src = FALLBACK_IMAGE;
+  };
 
+  return (
+    <div className="home-page">
+      <section className="hero-section" id="hero">
+        <div className="hero-content">
+          <div className="hero-badge">⚽ LIVE UPDATES</div>
+          <h1>Football Transfer Hub</h1>
+          <p>Your ultimate destination for transfer news, player market values, and the latest football updates from around the world.</p>
         </div>
-    );
+        <div className="hero-glow"></div>
+      </section>
+
+      <section className="news-section" id="news-feed">
+        <div className="section-header">
+          <h2>Latest Football News</h2>
+          <span className="section-subtitle">Powered by live RSS feeds</span>
+        </div>
+
+        {loading ? (
+          <div className="news-grid">
+            {[...Array(6)].map((_, i) => (
+              <div className="news-card skeleton" key={i}>
+                <div className="skeleton-image"></div>
+                <div className="skeleton-content">
+                  <div className="skeleton-line wide"></div>
+                  <div className="skeleton-line medium"></div>
+                  <div className="skeleton-line narrow"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : news.length > 0 ? (
+          <div className="news-grid">
+            {news.map((article, index) => (
+              <a
+                href={article.articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="news-card"
+                key={article._id || index}
+                id={`news-card-${index}`}
+              >
+                <div className="news-card-image">
+                  <img
+                    src={article.imageUrl || FALLBACK_IMAGE}
+                    alt={article.title}
+                    onError={handleImageError}
+                    loading="lazy"
+                  />
+                  <span className="news-source-badge">{article.source}</span>
+                </div>
+                <div className="news-card-body">
+                  <h3>{article.title}</h3>
+                  <p>{article.description?.substring(0, 120)}{article.description?.length > 120 ? '...' : ''}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <span className="empty-icon">📰</span>
+            <h3>No news available</h3>
+            <p>Check back later for the latest football updates.</p>
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }
 
 export default Home;
