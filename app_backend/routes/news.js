@@ -13,8 +13,8 @@ const parser = new Parser({
 const RSS_FEEDS = [
   { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', source: 'BBC Sport' },
   { url: 'https://www.espn.com/espn/rss/soccer/news', source: 'ESPN FC' },
-  { url: 'https://www.skysports.com/rss/12040', source: 'Sky Sports' },
-  { url: 'https://www.goal.com/feeds/en/news', source: 'Goal.com' }
+  { url: 'https://www.skysports.com/rss/11095', source: 'Sky Sports' },
+  { url: 'https://www.theguardian.com/football/rss', source: 'The Guardian' }
 ];
 
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
