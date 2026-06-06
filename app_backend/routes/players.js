@@ -2,7 +2,7 @@ const express = require('express');
 const { Player } = require('../db/users');
 const auth = require('../middleware/auth');
 
-const router = express.Router();
+const router = express.Router();// make changes to display at fixed size and add a search bar to the market page
 
 // GET /api/players — List all players, optional search
 router.get('/', async (req, res) => {

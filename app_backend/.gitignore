@@ -1,0 +1,8 @@
+node_modules/
+node_modules/
+app_backend/node_modules/
+app_Frontend/node_modules/
+
+.env
+app_backend/.env
+app_Frontend/.env
