@@ -6,7 +6,13 @@ const router = express.Router();
 const parser = new Parser({
   timeout: 10000,
   headers: {
-    'User-Agent': 'Football News Hub/1.0'
+    'User-Agent': 'Football Transfer Hub/1.0'
+  },
+  customFields: {
+    item: [
+      ['media:thumbnail', 'mediaThumbnail'],
+      ['media:content', 'mediaContent', { keepArray: true }]
+    ]
   }
 });
 
@@ -39,14 +45,30 @@ router.get('/', async (req, res) => {
     const feedPromises = RSS_FEEDS.map(async (feed) => {
       try {
         const parsed = await parser.parseURL(feed.url);
-        const articles = parsed.items.slice(0, 8).map(item => ({
-          title: item.title || 'Untitled',
-          description: item.contentSnippet || item.content || item.summary || '',
-          imageUrl: item.enclosure?.url || item['media:content']?.$.url || item['media:thumbnail']?.$.url || '',
-          articleUrl: item.link || '',
-          source: feed.source,
-          fetchedAt: new Date()
-        }));
+        const articles = parsed.items.slice(0, 8).map(item => {
+          let imageUrl = '';
+          if (item.enclosure?.url) {
+            imageUrl = item.enclosure.url;
+          } else if (item.mediaThumbnail?.$.url) {
+            imageUrl = item.mediaThumbnail.$.url;
+          } else if (item.mediaThumbnail?.url) {
+            imageUrl = item.mediaThumbnail.url;
+          } else if (item.mediaContent) {
+            const contentArray = Array.isArray(item.mediaContent) ? item.mediaContent : [item.mediaContent];
+            // Prefer the last one in the array (usually highest resolution)
+            const chosen = contentArray[contentArray.length - 1];
+            imageUrl = chosen?.$.url || chosen?.url || '';
+          }
+
+          return {
+            title: item.title || 'Untitled',
+            description: item.contentSnippet || item.content || item.summary || '',
+            imageUrl,
+            articleUrl: item.link || '',
+            source: feed.source,
+            fetchedAt: new Date()
+          };
+        });
         return articles;
       } catch (err) {
         console.error(`Error fetching RSS from ${feed.source}:`, err.message);
