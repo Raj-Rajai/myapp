@@ -20,8 +20,20 @@ const RSS_FEEDS = [
   { url: 'https://feeds.bbci.co.uk/sport/football/rss.xml', source: 'BBC Sport' },
   { url: 'https://www.espn.com/espn/rss/soccer/news', source: 'ESPN FC' },
   { url: 'https://www.skysports.com/rss/11095', source: 'Sky Sports' },
-  { url: 'https://www.theguardian.com/football/rss', source: 'The Guardian' }
-  { url: 'https://nitter.net/FabrizioRomano/rss', source: 'Fabrizio Romano' }
+  { url: 'https://www.theguardian.com/football/rss', source: 'The Guardian' },
+  { url: 'https://www.goal.com/en/feeds/news', source: 'Goal.com' },
+  { url: 'https://www.football365.com/rss', source: 'Football365' },
+  { url: 'https://www.sportingnews.com/us/soccer/news/rss', source: 'Sporting News' },
+  { url: 'https://www.fourfourtwo.com/rss', source: 'FourFourTwo' },
+  { url: 'https://www.transfermarkt.com/rss/news', source: 'Transfermarkt' },
+  { url: 'https://www.fifa.com/rss-feeds/news', source: 'FIFA' },
+  { url: 'https://www.uefa.com/rssfeed/news/', source: 'UEFA' },
+  { url: 'https://www.premierleague.com/rss/news', source: 'Premier League' },
+  { url: 'https://www.laliga.com/en-GB/rss', source: 'La Liga' },
+  { url: 'https://www.bundesliga.com/en/bundesliga/rss', source: 'Bundesliga' },
+  { url: 'https://www.seriea.com/rss/news', source: 'Serie A' },
+  { url: 'https://www.ligue1.com/rss/news', source: 'Ligue 1' },
+  { url: 'https://nitter.net/FabrizioRomano/rss', source: 'Fabrizio Romano' },
   { url: 'https://nitter.net/DeadlineDayLive/rss', source: 'Deadline Day Live' }
 ];
 
