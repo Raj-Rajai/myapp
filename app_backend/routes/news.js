@@ -21,6 +21,8 @@ const RSS_FEEDS = [
   { url: 'https://www.espn.com/espn/rss/soccer/news', source: 'ESPN FC' },
   { url: 'https://www.skysports.com/rss/11095', source: 'Sky Sports' },
   { url: 'https://www.theguardian.com/football/rss', source: 'The Guardian' }
+  { url: 'https://nitter.net/FabrizioRomano/rss', source: 'Fabrizio Romano' }
+  { url: 'https://nitter.net/DeadlineDayLive/rss', source: 'Deadline Day Live' }
 ];
 
 const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
