@@ -9,7 +9,6 @@ router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
     let query = {};
-
     if (search) {
       const regex = new RegExp(search, 'i');
       query = {

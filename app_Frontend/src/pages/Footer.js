@@ -3,7 +3,7 @@ function Footer() {
     <footer className="site-footer" id="footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <h3>⚽ Football Transfer Hub</h3>
+          <h3>⚽ Football News Hub</h3>
           <p>Your ultimate destination for football transfer news, player market values, and the latest updates from the beautiful game.</p>
         </div>
 
@@ -23,7 +23,7 @@ function Footer() {
 
         <div className="footer-bottom">
           <p>Developed by Raj Rajai ⚽</p>
-          <p>&copy; {new Date().getFullYear()} Football Transfer Hub. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Football News Hub. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,7 +1,7 @@
 {
-  "name": "football-transfer-hub-backend",
+  "name": "football-news-hub-backend",
   "version": "1.0.0",
-  "description": "Backend API for Football Transfer Hub",
+  "description": "Backend API for Football News Hub",
   "main": "express.js",
   "scripts": {
     "start": "node express.js",

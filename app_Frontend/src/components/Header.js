@@ -22,7 +22,7 @@ function Header() {
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMobile}>
           <span className="brand-icon">⚽</span>
-          <span className="brand-text">Football Transfer Hub</span>
+          <span className="brand-text">Football News Hub</span>
         </Link>
 
         <button

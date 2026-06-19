@@ -6,11 +6,9 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /api/auth/signup
 router.post('/signup', async (req, res) => {
   try {
     const { username, email, password, confirmPassword } = req.body;
-
     // Validation
     if (!username || !email || !password || !confirmPassword) {
       return res.status(400).json({ message: 'All fields are required.' });
@@ -21,7 +19,6 @@ router.post('/signup', async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters.' });
     }
-
     // Check existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -31,7 +28,6 @@ router.post('/signup', async (req, res) => {
     // Hash password and create user
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-
     const user = new User({ username, email, passwordHash });
     await user.save();
 

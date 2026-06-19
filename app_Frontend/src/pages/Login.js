@@ -36,7 +36,7 @@ function Login() {
         <div className="auth-header">
           <span className="auth-icon">⚽</span>
           <h1>Welcome Back</h1>
-          <p>Sign in to your Football Transfer Hub account</p>
+          <p>Sign in to your Football News Hub account</p>
         </div>
 
         {error && <div className="alert alert-error" id="login-error">{error}</div>}

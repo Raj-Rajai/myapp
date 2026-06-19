@@ -30,7 +30,7 @@ function Home() {
       <section className="hero-section" id="hero">
         <div className="hero-content">
           <div className="hero-badge">⚽ LIVE UPDATES</div>
-          <h1>Football Transfer Hub</h1>
+          <h1>Football News Hub</h1>
           <p>Your ultimate destination for transfer news, player market values, and the latest football updates from around the world.</p>
         </div>
         <div className="hero-glow"></div>

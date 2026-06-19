@@ -54,7 +54,7 @@ function Signup() {
         <div className="auth-header">
           <span className="auth-icon">⚽</span>
           <h1>Create Account</h1>
-          <p>Join Football Transfer Hub today</p>
+          <p>Join Football News Hub today</p>
         </div>
 
         {error && <div className="alert alert-error" id="signup-error">{error}</div>}

@@ -6,7 +6,7 @@ const router = express.Router();
 const parser = new Parser({
   timeout: 10000,
   headers: {
-    'User-Agent': 'Football Transfer Hub/1.0'
+    'User-Agent': 'Football News Hub/1.0'
   }
 });
 
