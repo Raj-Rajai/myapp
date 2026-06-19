@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 
-const FALLBACK_PLAYER = 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=600&q=80';
+const FALLBACK_PLAYER = '../assets/Default_Player_Image.png';
 
 function PlayerDetail() {
   const { id } = useParams();
