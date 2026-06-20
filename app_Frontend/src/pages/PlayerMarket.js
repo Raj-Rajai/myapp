@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import defaultPlayerImage from '../assets/Default_Player_Image.png';
 
-const FALLBACK_PLAYER = '../assets/Default_Player_Image.png';
+const FALLBACK_PLAYER = defaultPlayerImage;
 
 function PlayerMarket() {
   const [players, setPlayers] = useState([]);

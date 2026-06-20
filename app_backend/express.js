@@ -13,7 +13,6 @@ const app = express();
 // CORS - allow both production and development
 const allowedOrigins = [
   'https://football-news-hub-rj.netlify.app',
-  'https://model1project.netlify.app',
   'http://localhost:3000',
   'http://localhost:3001'
 ];
@@ -48,6 +47,14 @@ app.use('/api/*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT} ⚽`);
+  // Clear stale news cache on startup so re-categorization takes effect
+  try {
+    const { NewsCache } = require('./db/NewsCache');
+    await NewsCache.deleteMany({});
+    console.log('News cache cleared — fresh categorized fetch on next request.');
+  } catch (e) {
+    console.error('Cache clear on startup failed:', e.message);
+  }
 });

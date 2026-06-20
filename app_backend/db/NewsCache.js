@@ -6,6 +6,7 @@ const newsCacheSchema = new mongoose.Schema({
   imageUrl: { type: String, default: '' },
   articleUrl: { type: String, required: true },
   source: { type: String, default: 'Unknown' },
+  tags: { type: [String], default: ['General Football'] },
   fetchedAt: { type: Date, default: Date.now }
 });
 

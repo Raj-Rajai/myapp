@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import websiteLogo from '../assets/website_logo.png';
 
 function Header() {
   const { isAuthenticated, user, logout, getInitials } = useAuth();
@@ -21,7 +22,7 @@ function Header() {
     <header className="navbar" id="main-navbar">
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand" onClick={closeMobile}>
-          <span className="brand-icon">⚽</span>
+          <img src={websiteLogo} alt="Football News Hub Logo" className="brand-icon" />
           <span className="brand-text">Football News Hub</span>
         </Link>
 
