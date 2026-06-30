@@ -1,8 +1,9 @@
 const express = require('express');
 const { Player } = require('../db/users');
 const auth = require('../middleware/auth');
+const { generatePlayerProfile } = require('../services/playerIntelligence');
 
-const router = express.Router();// make changes to display at fixed size and add a search bar to the market page
+const router = express.Router();
 
 // GET /api/players — List all players, optional search
 router.get('/', async (req, res) => {
@@ -14,7 +15,8 @@ router.get('/', async (req, res) => {
       query = {
         $or: [
           { playerName: regex },
-          { club: regex }
+          { 'currentClub.clubName': regex },
+          { nationality: regex }
         ]
       };
     }
@@ -40,7 +42,6 @@ router.get('/:id', async (req, res) => {
     }
     res.json(player);
   } catch (error) {
-    // Handle invalid ObjectId
     if (error.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Player not found.' });
     }
@@ -49,22 +50,36 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/players — Create player (protected)
+// POST /api/players — Create player via AI Intelligence (protected)
 router.post('/', auth, async (req, res) => {
   try {
-    const { playerName, age, position, club, transferValue, imageUrl } = req.body;
+    const { playerName, nationality, imageUrl } = req.body;
 
-    if (!playerName || !age || !position || !club || !transferValue) {
-      return res.status(400).json({ message: 'All fields except image URL are required.' });
+    if (!playerName || !nationality) {
+      return res.status(400).json({ message: 'Player name and nationality are required.' });
     }
 
+    // Check if player already exists
+    const existing = await Player.findOne({
+      playerName: new RegExp(`^${playerName.trim()}$`, 'i')
+    });
+    if (existing) {
+      return res.status(409).json({
+        message: 'This player already exists in the database.',
+        playerId: existing._id
+      });
+    }
+
+    // Generate full profile via Player Intelligence Service
+    const profileData = await generatePlayerProfile(
+      playerName.trim(),
+      nationality.trim(),
+      imageUrl || ''
+    );
+
+    // Create and save player
     const player = new Player({
-      playerName,
-      age: Number(age),
-      position,
-      club,
-      transferValue,
-      imageUrl: imageUrl || '',
+      ...profileData,
       createdBy: req.user.id
     });
 
@@ -73,7 +88,37 @@ router.post('/', auth, async (req, res) => {
     res.status(201).json(populated);
   } catch (error) {
     console.error('Error creating player:', error);
-    res.status(500).json({ message: 'Error creating player.' });
+    res.status(500).json({ message: 'Error generating player profile. Please try again.' });
+  }
+});
+
+// PUT /api/players/:id/regenerate — Re-generate player data via AI (protected)
+router.put('/:id/regenerate', auth, async (req, res) => {
+  try {
+    const player = await Player.findById(req.params.id);
+    if (!player) {
+      return res.status(404).json({ message: 'Player not found.' });
+    }
+
+    console.log(`\n🔄 Regenerating profile for: ${player.playerName}`);
+
+    // Re-run the full AI pipeline
+    const profileData = await generatePlayerProfile(
+      player.playerName,
+      player.nationality,
+      player.imageUrl || ''
+    );
+
+    // Update the player with new data (keep createdBy and createdAt)
+    Object.assign(player, profileData);
+    player.updatedAt = new Date();
+
+    const saved = await player.save();
+    const populated = await saved.populate('createdBy', 'username');
+    res.json(populated);
+  } catch (error) {
+    console.error('Error regenerating player:', error);
+    res.status(500).json({ message: 'Error regenerating player profile. Please try again.' });
   }
 });
 
