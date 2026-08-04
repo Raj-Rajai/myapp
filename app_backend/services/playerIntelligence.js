@@ -6,23 +6,22 @@ const { calculateOVR, normalizePosition } = require('./ovrCalculator');
 /**
  * Main orchestrator: generates a complete player profile.
  *
- * The AI (Gemini) is called only ONCE — at profile creation time.
- * All data is stored permanently in MongoDB.
- * The "Regenerate" button explicitly calls this again to refresh.
+ * Architecture:
+ * 1. Collect ALL verified data from APIs (Football API + Wikipedia)
+ * 2. Pass EVERYTHING to Gemini in a single request — AI analyses, never invents
+ * 3. Force-override deceased/retired with Wikipedia ground truth
+ * 4. Calculate EA FC OVR from ratings
+ * 5. Assemble final player → stored permanently in MongoDB
  *
- * Flow:
- * 1. Fetch from API-Football + Wikipedia in parallel
- * 2. Call Gemini — passing wiki deceased/death truth so AI knows
- * 3. Force-override retired/deceased flags with Wikipedia ground truth
- * 4. Calculate EA FC position-specific OVR
- * 5. Assemble and return the final player object for MongoDB
+ * AI is called only ONCE per player. Data lives in MongoDB forever.
+ * "Regenerate" button is the only way to re-trigger AI.
  */
 async function generatePlayerProfile(playerName, nationality, userImageUrl) {
   console.log(`\n⚽ Building profile: ${playerName} (${nationality})`);
 
-  // ──────────────────────────────────────────────────────────────
-  // STEP 1: Parallel fetch from API-Football + Wikipedia
-  // ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // STEP 1: Collect all verified data from APIs in parallel
+  // ════════════════════════════════════════════════════════════════
   const searchResults = await footballApi.searchPlayer(playerName);
 
   let apiPlayerData = null;
@@ -48,45 +47,95 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
 
   console.log(`  ✓ Transfers: ${transfers.length} | Trophies: ${trophies.length} | Wiki: ${wikiData ? 'Yes' : 'No'}`);
 
-  // ──────────────────────────────────────────────────────────────
-  // STEP 2: Extract raw data
-  // ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // STEP 2: Extract raw verified fields
+  // ════════════════════════════════════════════════════════════════
   const player = apiPlayerData?.player || {};
   const stats  = apiPlayerData?.statistics?.[0] || {};
   const team   = stats.team   || {};
   const league = stats.league || {};
 
-  const birthDate        = player.birth?.date || wikiData?.birthDate || '';
-  const deathDate        = wikiData?.deathDate || '';
-  // Wikipedia is the single source of truth for deceased status
+  const birthDate          = player.birth?.date || wikiData?.birthDate || '';
+  const deathDate          = wikiData?.deathDate || '';
   const isDeceasedFromWiki = wikiData?.isDeceased || false;
 
   let imageUrl = userImageUrl || player.photo || wikiData?.image || '';
 
-  // ──────────────────────────────────────────────────────────────
-  // STEP 3: Call Gemini — pass wiki deceased info so AI knows
-  // ──────────────────────────────────────────────────────────────
-  console.log('  ⚙ Calling Gemini...');
+  // ════════════════════════════════════════════════════════════════
+  // STEP 3: Single Gemini call — pass ALL verified data
+  // Gemini analyses; it does NOT invent facts
+  // ════════════════════════════════════════════════════════════════
+  console.log('  ⚙ Calling Gemini (single request)...');
+
+  // Compact the API data to reduce token usage (only send what matters)
+  const compactApiData = apiPlayerData ? {
+    player: {
+      name: player.name,
+      nationality: player.nationality,
+      age: player.age,
+      height: player.height,
+      weight: player.weight,
+      photo: player.photo,
+      birth: player.birth
+    },
+    statistics: [{
+      team:   { name: team.name },
+      league: { name: league.name, country: league.country },
+      games:  stats.games,
+      goals:  stats.goals,
+      passes: stats.passes,
+      tackles: stats.tackles,
+      cards:  stats.cards
+    }]
+  } : null;
+
+  const compactWiki = wikiData ? {
+    birthDate: wikiData.birthDate,
+    deathDate: wikiData.deathDate || undefined,
+    isDeceased: wikiData.isDeceased || undefined,
+    height: wikiData.height,
+    weight: wikiData.weight,
+    position: wikiData.position,
+    foot: wikiData.foot,
+    currentTeam: wikiData.teamName,
+    nationality: wikiData.nationality
+  } : null;
+
+  // Compact trophies — only send winners, deduplicated
+  const compactTrophies = trophies
+    .filter(t => t.place === 'Winner')
+    .map(t => ({ league: t.league, season: t.season }));
+
+  // Compact transfers
+  const compactTransfers = transfers.map(t => ({
+    date: t.date,
+    from: t.teams?.out?.name,
+    to: t.teams?.in?.name,
+    type: t.type
+  }));
 
   const aiProfile = await geminiApi.generateFullProfile({
-    name:               playerName,
-    nationality:        player.nationality || wikiData?.nationality || nationality,
-    position:           stats.games?.position || wikiData?.position || 'Unknown',
-    club:               team.name || wikiData?.teamName || 'Unknown',
+    name:           playerName,
+    nationality:    player.nationality || wikiData?.nationality || nationality,
     birthDate,
-    // Pass wiki truth to AI
-    isDeceasedFromWiki,
-    deathDateFromWiki: deathDate
+    position:       stats.games?.position || wikiData?.position || 'Unknown',
+    club:           team.name || wikiData?.teamName || 'Unknown',
+    wikipediaData:  compactWiki,
+    footballApiData: compactApiData,
+    transfers:      compactTransfers,
+    trophies:       compactTrophies
   });
 
-  // ──────────────────────────────────────────────────────────────
+  console.log(`  ✓ AI response received`);
+
+  // ════════════════════════════════════════════════════════════════
   // STEP 4: Force-override deceased/retired with Wikipedia truth
-  // Wikipedia is authoritative; AI may still hallucinate on this
-  // ──────────────────────────────────────────────────────────────
+  // Wikipedia is authoritative — AI might still hallucinate
+  // ════════════════════════════════════════════════════════════════
   const isDeceased = isDeceasedFromWiki || aiProfile.isDeceased || false;
   const isRetired  = isDeceased || aiProfile.isRetired || false;
 
-  // Compute age: use age-at-death for deceased, else current age
+  // Age: calculate to death date for deceased, else to today
   let age = 0;
   if (birthDate) {
     const endDate = (isDeceased && deathDate) ? new Date(deathDate) : new Date();
@@ -101,13 +150,12 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
     ? (deathDate ? new Date(deathDate).getFullYear() : aiProfile.deathYear || null)
     : null;
 
-  console.log(`  ✓ Status: retired=${isRetired} | deceased=${isDeceased} | age=${age} | pos=${aiProfile.bestPosition}`);
+  console.log(`  ✓ Status: retired=${isRetired} | deceased=${isDeceased} | age=${age}`);
 
-  // ──────────────────────────────────────────────────────────────
-  // STEP 5: EA FC position-specific OVR calculation
-  // ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
+  // STEP 5: EA FC position-specific OVR
+  // ════════════════════════════════════════════════════════════════
   const bestPos = normalizePosition(aiProfile.bestPosition || stats.games?.position || 'CM');
-  // For retired/deceased, freeze age at prime (27) for OVR purposes
   const ovrAge  = (isRetired || isDeceased) ? 27 : Math.max(15, age);
 
   const ovrData = calculateOVR(
@@ -118,27 +166,31 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
     'average'
   );
 
-  console.log(`  ✓ OVR: ${ovrData.overallRating} as ${ovrData.bestPosition}`);
+  console.log(`  ✓ OVR: ${ovrData.overallRating} (${ovrData.bestPosition})`);
 
-  // ──────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════
   // STEP 6: Merge achievements & career history
-  // Prefer API-Football (real verified data), fall back to AI
-  // ──────────────────────────────────────────────────────────────
-  const apiAchievements  = buildAchievements(trophies);
-  const apiTransferHistory = buildTransferHistory(transfers);
+  // API-Football data > AI data (AI should pass through API data anyway)
+  // ════════════════════════════════════════════════════════════════
+  const apiAchievements = buildAchievements(trophies);
+  const apiCareerHistory = buildCareerHistory(transfers);
 
-  const achievements  = apiAchievements.length   > 0 ? apiAchievements   : (aiProfile.achievements || []);
-  const previousClubs = apiTransferHistory.length > 0 ? apiTransferHistory
+  const achievements = apiAchievements.length > 0
+    ? apiAchievements
+    : (aiProfile.achievements || []);
+
+  const previousClubs = apiCareerHistory.length > 0
+    ? apiCareerHistory
     : (aiProfile.careerHistory || []).map(c => ({
         clubName: c.club || '',
-        from:     String(c.from || ''),
-        to:       String(c.to  || '')
+        from: String(c.from || ''),
+        to: String(c.to || '')
       }));
 
-  // ──────────────────────────────────────────────────────────────
-  // STEP 7: Assemble final player object (stored in MongoDB)
-  // ──────────────────────────────────────────────────────────────
-  return {
+  // ════════════════════════════════════════════════════════════════
+  // STEP 7: Assemble final player object → saved to MongoDB
+  // ════════════════════════════════════════════════════════════════
+  const finalPlayer = {
     playerName,
     nationality: player.nationality || wikiData?.nationality || nationality,
 
@@ -148,14 +200,18 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
 
     personal: {
       age,
-      height:        player.height || wikiData?.height || '',
-      weight:        player.weight || wikiData?.weight || '',
+      height: player.height || wikiData?.height || '',
+      weight: player.weight || wikiData?.weight || '',
       preferredFoot: wikiData?.foot || ''
     },
 
     currentClub: {
-      clubName: isDeceased ? '' : (team.name || aiProfile.currentClub || wikiData?.teamName || ''),
-      league:   isDeceased ? '' : (league.name || aiProfile.league || '')
+      clubName: (isRetired || isDeceased)
+        ? (aiProfile.currentClub || '')
+        : (team.name || aiProfile.currentClub || wikiData?.teamName || ''),
+      league: (isRetired || isDeceased)
+        ? ''
+        : (league.name || aiProfile.league || '')
     },
 
     market: {
@@ -164,55 +220,57 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
     },
 
     statistics: {
-      appearances:      aiProfile.careerStats?.appearances      || 0,
-      goals:            aiProfile.careerStats?.goals            || 0,
-      assists:          aiProfile.careerStats?.assists          || 0,
-      yellowCards:      aiProfile.careerStats?.yellowCards      || 0,
-      redCards:         aiProfile.careerStats?.redCards         || 0,
-      minutesPlayed:    0,
-      internationalCaps:   aiProfile.careerStats?.internationalCaps   || 0,
-      internationalGoals:  aiProfile.careerStats?.internationalGoals  || 0
+      appearances:       aiProfile.careerStats?.appearances    ?? stats.games?.appearences ?? 0,
+      goals:             aiProfile.careerStats?.goals          ?? stats.goals?.total       ?? 0,
+      assists:           aiProfile.careerStats?.assists        ?? stats.goals?.assists     ?? 0,
+      yellowCards:       aiProfile.careerStats?.yellowCards     ?? stats.cards?.yellow      ?? 0,
+      redCards:          aiProfile.careerStats?.redCards        ?? stats.cards?.red         ?? 0,
+      minutesPlayed:     stats.games?.minutes || 0,
+      internationalCaps:  aiProfile.careerStats?.internationalCaps  ?? 0,
+      internationalGoals: aiProfile.careerStats?.internationalGoals ?? 0
     },
 
     ratings: aiProfile.ratings,
 
     ovrData: {
-      overallRating:  ovrData.overallRating,
-      baseOVR:        ovrData.baseOVR,
-      potentialOVR:   ovrData.potentialOVR,
-      bestPosition:   ovrData.bestPosition,
+      overallRating:   ovrData.overallRating,
+      baseOVR:         ovrData.baseOVR,
+      potentialOVR:    ovrData.potentialOVR,
+      bestPosition:    ovrData.bestPosition,
       positionRatings: ovrData.positionRatings,
-      ageModifier:    ovrData.ageModifier
+      ageModifier:     ovrData.ageModifier
     },
 
     achievements,
     previousClubs,
 
     aiScoutReport: {
-      playingStyle:   aiProfile.scoutReport?.playingStyle   || '',
-      strengths:      aiProfile.scoutReport?.strengths      || [],
-      weaknesses:     aiProfile.scoutReport?.weaknesses     || [],
+      playingStyle:    aiProfile.scoutReport?.playingStyle    || '',
+      strengths:       aiProfile.scoutReport?.strengths       || [],
+      weaknesses:      aiProfile.scoutReport?.weaknesses      || [],
       tacticalSystems: aiProfile.scoutReport?.tacticalSystems || [],
-      leadership:     aiProfile.scoutReport?.leadership     || '',
-      careerStage:    aiProfile.scoutReport?.careerStage    || ''
+      leadership:      aiProfile.scoutReport?.leadership      || '',
+      careerStage:     aiProfile.scoutReport?.careerStage     || ''
     },
 
-    // Null for retired/deceased — never show transfer section for them
     aiTransferAnalysis: (isRetired || isDeceased) ? null : (aiProfile.transferAnalysis || null),
 
     imageUrl
   };
+
+  console.log(`  ✅ Done: ${playerName} — OVR ${ovrData.overallRating} (${ovrData.bestPosition})\n`);
+  return finalPlayer;
 }
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────
 
-function buildTransferHistory(transfers) {
+function buildCareerHistory(transfers) {
   if (!transfers?.length) return [];
   return transfers
     .map(t => ({
-      clubName: t.teams?.in?.name  || t.teams?.out?.name || 'Unknown',
-      from:     t.date             || '',
-      to:       t.teams?.in?.name  || ''
+      clubName: t.teams?.in?.name || t.teams?.out?.name || '',
+      from: t.date || '',
+      to: t.teams?.in?.name || ''
     }))
     .reverse();
 }
