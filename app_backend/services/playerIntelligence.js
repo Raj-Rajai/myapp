@@ -192,7 +192,7 @@ async function generatePlayerProfile(playerName, nationality, userImageUrl) {
   // ════════════════════════════════════════════════════════════════
   const finalPlayer = {
     playerName,
-    nationality: player.nationality || wikiData?.nationality || nationality,
+    nationality: player.nationality || nationality || wikiData?.nationality || '',
 
     isRetired,
     isDeceased,

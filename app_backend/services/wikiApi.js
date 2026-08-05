@@ -166,10 +166,11 @@ function parseInfobox(wikitext) {
     data.currentTeam = teamMatch[1].replace(/\[|\]/g, '').trim();
   }
 
-  // Nationality — often in birth_place
-  const natMatch = wikitext.match(/birth_place\s*=.*?\[\[([^\]\|]+)/i);
+  // Nationality — look for explicit nationality field, NOT birth_place
+  // birth_place returns cities (e.g. "Leeds" for Haaland), not countries
+  const natMatch = wikitext.match(/\bnationa(?:l_team|lity)\s*=\s*\[?\[?([^\]\|\}\n]+)/i);
   if (natMatch) {
-    data.nationality = natMatch[1].trim();
+    data.nationality = natMatch[1].replace(/\[|\]/g, '').trim();
   }
 
   return data;
